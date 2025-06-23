@@ -607,7 +607,7 @@
             const price = optionType === 'call' ? blackScholesCall(S, K, T, r, sigma) : blackScholesPut(S, K, T, r, sigma);
             const greeks = calculateGreeks(S, K, T, r, sigma, optionType);
             
-            document.getElementById('option-price').textContent = `€€{price.toFixed(4)}`;
+            document.getElementById('option-price').textContent = `€{price.toFixed(4)}`;
             document.getElementById('delta').textContent = greeks.delta.toFixed(4);
             document.getElementById('gamma').textContent = greeks.gamma.toFixed(4);
             document.getElementById('theta').textContent = greeks.theta.toFixed(4);
@@ -654,7 +654,7 @@
             }
             
             const currentPrice = optionType === 'call' ? blackScholesCall(S, K, T, r, sigma) : blackScholesPut(S, K, T, r, sigma);
-            document.getElementById('current-price').textContent = `€€{currentPrice.toFixed(4)}`;
+            document.getElementById('current-price').textContent = `€{currentPrice.toFixed(4)}`;
             
             const trace = {
                 x: xValues,
