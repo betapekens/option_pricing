@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black-Scholes Option Pricing Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.24.1/plotly.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            margin: 0 5px;
+            background: transparent;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .slider-container {
+            margin-bottom: 20px;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e5e9;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-value {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .metric:hover {
+            transform: scale(1.05);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .plot-container {
+            margin-top: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .explanation {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .explanation h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .explanation ul {
+            margin-left: 20px;
+        }
+
+        .explanation li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Black-Scholes Option Pricing</h1>
+            <p>Calculate option prices and analyze Greeks with interactive visualizations</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('calculator', this)">Option Calculator</button>
+            <button class="nav-tab" onclick="showTab('curves', this)">Interactive Curves</button>
+            <button class="nav-tab" onclick="showTab('greeks', this)">Greeks Analysis</button>
+        </div>
+
+        <!-- Calculator Tab -->
+        <div id="calculator" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h3>Input Parameters</h3>
+                    <div class="input-group">
+                        <label for="stock-price">Current Stock Price (S)</label>
+                        <input type="number" id="stock-price" value="100" step="1" min="0.01" oninput="updateCalculator()">
+                    </div>
+                    <div class="input-group">
+                        <label for="strike-price">Strike Price (K)</label>
+                        <input type="number" id="strike-price" value="100" step="1" min="0.01" oninput="updateCalculator()">
+                    </div>
+                    <div class="input-group">
+                        <label for="time-exp">Time to Expiration (years)</label>
+                        <input type="number" id="time-exp" value="1" step="0.1" min="0.001" oninput="updateCalculator()">
+                    </div>
+                    <div class="input-group">
+                        <label for="risk-rate">Risk-free Rate (%)</label>
+                        <input type="number" id="risk-rate" value="5" step="0.1" min="0" max="100" oninput="updateCalculator()">
+                    </div>
+                    <div class="input-group">
+                        <label for="volatility">Volatility (%)</label>
+                        <input type="number" id="volatility" value="20" step="1" min="0.1" max="1000" oninput="updateCalculator()">
+                    </div>
+                    <div class="input-group">
+                        <label for="option-type">Option Type</label>
+                        <select id="option-type" onchange="updateCalculator()">
+                            <option value="call">Call</option>
+                            <option value="put">Put</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Results</h3>
+                    <div class="results-grid">
+                        <div class="metric">
+                            <div class="metric-label">Option Price</div>
+                            <div class="metric-value" id="option-price">$0.00</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Delta (Δ)</div>
+                            <div class="metric-value" id="delta">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Gamma (Γ)</div>
+                            <div class="metric-value" id="gamma">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Theta (Θ)</div>
+                            <div class="metric-value" id="theta">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Vega (ν)</div>
+                            <div class="metric-value" id="vega">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Rho (ρ)</div>
+                            <div class="metric-value" id="rho">0.0000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="explanation">
+                <h4>About the Black-Scholes Model</h4>
+                <ul>
+                    <li>Stock prices follow a geometric Brownian motion</li>
+                    <li>Constant risk-free interest rate</li>
+                    <li>Constant volatility</li>
+                    <li>No dividends during the option's life</li>
+                    <li>European-style exercise</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Curves Tab -->
+        <div id="curves" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>Parameters</h3>
+                    <div class="slider-container">
+                        <label for="curve-stock">Stock Price: <span id="curve-stock-val">100</span></label>
+                        <input type="range" id="curve-stock" class="slider" min="50" max="200" value="100" oninput="updateSliderValue('curve-stock', 'curve-stock-val'); updateCurveChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="curve-strike">Strike Price: <span id="curve-strike-val">100</span></label>
+                        <input type="range" id="curve-strike" class="slider" min="50" max="200" value="100" oninput="updateSliderValue('curve-strike', 'curve-strike-val'); updateCurveChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="curve-time">Time to Expiration: <span id="curve-time-val">1.0</span> years</label>
+                        <input type="range" id="curve-time" class="slider" min="0.1" max="2.0" step="0.1" value="1.0" oninput="updateSliderValue('curve-time', 'curve-time-val'); updateCurveChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="curve-rate">Risk-free Rate: <span id="curve-rate-val">5.0</span>%</label>
+                        <input type="range" id="curve-rate" class="slider" min="0" max="15" step="0.5" value="5.0" oninput="updateSliderValue('curve-rate', 'curve-rate-val'); updateCurveChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="curve-vol">Volatility: <span id="curve-vol-val">20</span>%</label>
+                        <input type="range" id="curve-vol" class="slider" min="5" max="100" step="5" value="20" oninput="updateSliderValue('curve-vol', 'curve-vol-val'); updateCurveChart();">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Chart Options</h3>
+                    <div class="input-group">
+                        <label for="curve-type">Curve Type</label>
+                        <select id="curve-type" onchange="updateCurveChart()">
+                            <option value="stock">Stock Price vs Option Price</option>
+                            <option value="volatility">Volatility vs Option Price</option>
+                            <option value="time">Time to Expiration vs Option Price</option>
+                            <option value="strike">Strike Price vs Option Price</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="curve-option-type">Option Type</label>
+                        <select id="curve-option-type" onchange="updateCurveChart()">
+                            <option value="call">Call</option>
+                            <option value="put">Put</option>
+                        </select>
+                    </div>
+                    <div class="metric" style="margin-top: 20px;">
+                        <div class="metric-label">Current Option Price</div>
+                        <div class="metric-value" id="current-price">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="plot-container">
+                <div id="curve-plot" style="height: 500px;"></div>
+            </div>
+        </div>
+
+        <!-- Greeks Tab -->
+        <div id="greeks" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>Parameters</h3>
+                    <div class="slider-container">
+                        <label for="greeks-stock">Stock Price: <span id="greeks-stock-val">100</span></label>
+                        <input type="range" id="greeks-stock" class="slider" min="50" max="200" value="100" oninput="updateSliderValue('greeks-stock', 'greeks-stock-val'); updateGreeksChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="greeks-strike">Strike Price: <span id="greeks-strike-val">100</span></label>
+                        <input type="range" id="greeks-strike" class="slider" min="50" max="200" value="100" oninput="updateSliderValue('greeks-strike', 'greeks-strike-val'); updateGreeksChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="greeks-time">Time to Expiration: <span id="greeks-time-val">1.0</span> years</label>
+                        <input type="range" id="greeks-time" class="slider" min="0.1" max="2.0" step="0.1" value="1.0" oninput="updateSliderValue('greeks-time', 'greeks-time-val'); updateGreeksChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="greeks-rate">Risk-free Rate: <span id="greeks-rate-val">5.0</span>%</label>
+                        <input type="range" id="greeks-rate" class="slider" min="0" max="15" step="0.5" value="5.0" oninput="updateSliderValue('greeks-rate', 'greeks-rate-val'); updateGreeksChart();">
+                    </div>
+                    <div class="slider-container">
+                        <label for="greeks-vol">Volatility: <span id="greeks-vol-val">20</span>%</label>
+                        <input type="range" id="greeks-vol" class="slider" min="5" max="100" step="5" value="20" oninput="updateSliderValue('greeks-vol', 'greeks-vol-val'); updateGreeksChart();">
+                    </div>
+                    <div class="input-group">
+                        <label for="greeks-option-type">Option Type</label>
+                        <select id="greeks-option-type" onchange="updateGreeksChart()">
+                            <option value="call">Call</option>
+                            <option value="put">Put</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Current Greeks</h3>
+                    <div class="results-grid">
+                        <div class="metric">
+                            <div class="metric-label">Delta (Δ)</div>
+                            <div class="metric-value" id="greeks-delta">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Gamma (Γ)</div>
+                            <div class="metric-value" id="greeks-gamma">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Theta (Θ)</div>
+                            <div class="metric-value" id="greeks-theta">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Vega (ν)</div>
+                            <div class="metric-value" id="greeks-vega">0.0000</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Rho (ρ)</div>
+                            <div class="metric-value" id="greeks-rho">0.0000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="plot-container">
+                <div id="greeks-plot" style="height: 600px;"></div>
+            </div>
+
+            <div class="explanation">
+                <h4>Greeks Explanation</h4>
+                <ul>
+                    <li><strong>Delta (Δ):</strong> Measures the rate of change of option price with respect to stock price</li>
+                    <li><strong>Gamma (Γ):</strong> Measures the rate of change of Delta with respect to stock price</li>
+                    <li><strong>Theta (Θ):</strong> Measures the rate of change of option price with respect to time (time decay)</li>
+                    <li><strong>Vega (ν):</strong> Measures the rate of change of option price with respect to volatility</li>
+                    <li><strong>Rho (ρ):</strong> Measures the rate of change of option price with respect to interest rate</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mathematical functions
+        function normalCDF(x) {
+            return 0.5 * (1 + erf(x / Math.sqrt(2)));
+        }
+
+        function normalPDF(x) {
+            return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+        }
+
+        function erf(x) {
+            // Approximation of error function
+            const a1 =  0.254829592;
+            const a2 = -0.284496736;
+            const a3 =  1.421413741;
+            const a4 = -1.453152027;
+            const a5 =  1.061405429;
+            const p  =  0.3275911;
+            
+            const sign = x >= 0 ? 1 : -1;
+            x = Math.abs(x);
+            
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            
+            return sign * y;
+        }
+
+        // Black-Scholes functions
+        function blackScholesCall(S, K, T, r, sigma) {
+            if (T <= 0) return Math.max(S - K, 0);
+            
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+            
+            return S * normalCDF(d1) - K * Math.exp(-r * T) * normalCDF(d2);
+        }
+
+        function blackScholesPut(S, K, T, r, sigma) {
+            if (T <= 0) return Math.max(K - S, 0);
+            
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+            
+            return K * Math.exp(-r * T) * normalCDF(-d2) - S * normalCDF(-d1);
+        }
+
+        function calculateGreeks(S, K, T, r, sigma, optionType) {
+            if (T <= 0) {
+                 const delta = optionType === 'call' ? (S > K ? 1.0 : 0.0) : (S < K ? -1.0 : 0.0);
+                 if (S === K) return { delta: optionType === 'call' ? 0.5 : -0.5, gamma: 0, theta: 0, vega: 0, rho: 0 };
+                 return { delta, gamma: 0, theta: 0, vega: 0, rho: 0 };
+            }
+            
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+            
+            const delta = optionType === 'call' ? normalCDF(d1) : normalCDF(d1) - 1;
+            const gamma = normalPDF(d1) / (S * sigma * Math.sqrt(T));
+            
+            let theta, rho;
+            if (optionType === 'call') {
+                theta = (-S * normalPDF(d1) * sigma / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * normalCDF(d2)) / 365;
+                rho = K * T * Math.exp(-r * T) * normalCDF(d2) / 100;
+            } else {
+                theta = (-S * normalPDF(d1) * sigma / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * normalCDF(-d2)) / 365;
+                rho = -K * T * Math.exp(-r * T) * normalCDF(-d2) / 100;
+            }
+            
+            const vega = S * normalPDF(d1) * Math.sqrt(T) / 100;
+            
+            return { delta, gamma, theta, vega, rho };
+        }
+
+        // Tab functionality
+        function showTab(tabName, element) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const navTabs = document.querySelectorAll('.nav-tab');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            navTabs.forEach(nav => nav.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            element.classList.add('active');
+            
+            if (tabName === 'curves') updateCurveChart();
+            if (tabName === 'greeks') updateGreeksChart();
+        }
+
+        // Update slider values
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueElement = document.getElementById(valueId);
+            valueElement.textContent = parseFloat(slider.value).toFixed(slider.step.includes('.') ? 1 : 0);
+        }
+
+        // Calculator functionality
+        function updateCalculator() {
+            const S = parseFloat(document.getElementById('stock-price').value);
+            const K = parseFloat(document.getElementById('strike-price').value);
+            const T = parseFloat(document.getElementById('time-exp').value);
+            const r = parseFloat(document.getElementById('risk-rate').value) / 100;
+            const sigma = parseFloat(document.getElementById('volatility').value) / 100;
+            const optionType = document.getElementById('option-type').value;
+            
+            const price = optionType === 'call' ? blackScholesCall(S, K, T, r, sigma) : blackScholesPut(S, K, T, r, sigma);
+            const greeks = calculateGreeks(S, K, T, r, sigma, optionType);
+            
+            document.getElementById('option-price').textContent = `$${price.toFixed(4)}`;
+            document.getElementById('delta').textContent = greeks.delta.toFixed(4);
+            document.getElementById('gamma').textContent = greeks.gamma.toFixed(4);
+            document.getElementById('theta').textContent = greeks.theta.toFixed(4);
+            document.getElementById('vega').textContent = greeks.vega.toFixed(4);
+            document.getElementById('rho').textContent = greeks.rho.toFixed(4);
+        }
+
+        // Curves functionality
+        function updateCurveChart() {
+            const S = parseFloat(document.getElementById('curve-stock').value);
+            const K = parseFloat(document.getElementById('curve-strike').value);
+            const T = parseFloat(document.getElementById('curve-time').value);
+            const r = parseFloat(document.getElementById('curve-rate').value) / 100;
+            const sigma = parseFloat(document.getElementById('curve-vol').value) / 100;
+            const curveType = document.getElementById('curve-type').value;
+            const optionType = document.getElementById('curve-option-type').value;
+            
+            let xValues = [];
+            let yValues = [];
+            let xTitle = '';
+            
+            switch (curveType) {
+                case 'stock':
+                    xValues = Array.from({length: 101}, (_, i) => S * 0.5 + (S * 1.0 * i / 100));
+                    yValues = xValues.map(x => optionType === 'call' ? blackScholesCall(x, K, T, r, sigma) : blackScholesPut(x, K, T, r, sigma));
+                    xTitle = 'Stock Price';
+                    break;
+                case 'volatility':
+                    xValues = Array.from({length: 101}, (_, i) => 0.05 + (0.95 * i / 100));
+                    yValues = xValues.map(x => optionType === 'call' ? blackScholesCall(S, K, T, r, x) : blackScholesPut(S, K, T, r, x));
+                    xValues = xValues.map(x => x * 100);
+                    xTitle = 'Volatility (%)';
+                    break;
+                case 'time':
+                    xValues = Array.from({length: 101}, (_, i) => 0.01 + (T * 2 * i / 100));
+                    yValues = xValues.map(x => optionType === 'call' ? blackScholesCall(S, K, x, r, sigma) : blackScholesPut(S, K, x, r, sigma));
+                    xTitle = 'Time to Expiration (years)';
+                    break;
+                case 'strike':
+                    xValues = Array.from({length: 101}, (_, i) => K * 0.5 + (K * 1.0 * i / 100));
+                    yValues = xValues.map(x => optionType === 'call' ? blackScholesCall(S, x, T, r, sigma) : blackScholesPut(S, x, T, r, sigma));
+                    xTitle = 'Strike Price';
+                    break;
+            }
+            
+            const currentPrice = optionType === 'call' ? blackScholesCall(S, K, T, r, sigma) : blackScholesPut(S, K, T, r, sigma);
+            document.getElementById('current-price').textContent = `$${currentPrice.toFixed(4)}`;
+            
+            const trace = {
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: optionType === 'call' ? '#667eea' : '#764ba2', width: 3 },
+                name: optionType.charAt(0).toUpperCase() + optionType.slice(1)
+            };
+            
+            let currentX;
+            switch(curveType) {
+                case 'stock': currentX = S; break;
+                case 'volatility': currentX = sigma * 100; break;
+                case 'time': currentX = T; break;
+                case 'strike': currentX = K; break;
+            }
+
+            const markerTrace = {
+                x: [currentX],
+                y: [currentPrice],
+                mode: 'markers',
+                marker: { color: '#ff6347', size: 12, symbol: 'circle', line: { color: 'white', width: 2 } },
+                name: 'Current'
+            };
+
+            const layout = {
+                title: `Option Price vs. ${xTitle}`,
+                xaxis: { title: xTitle, gridcolor: '#eee' },
+                yaxis: { title: 'Option Price ($)', gridcolor: '#eee', rangemode: 'tozero' },
+                margin: { l: 60, r: 40, b: 50, t: 80 },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' },
+                legend: { x: 0.01, y: 0.99 }
+            };
+
+            Plotly.react('curve-plot', [trace, markerTrace], layout, {responsive: true});
+        }
+
+        // Greeks functionality
+        function updateGreeksChart() {
+            const S = parseFloat(document.getElementById('greeks-stock').value);
+            const K = parseFloat(document.getElementById('greeks-strike').value);
+            const T = parseFloat(document.getElementById('greeks-time').value);
+            const r = parseFloat(document.getElementById('greeks-rate').value) / 100;
+            const sigma = parseFloat(document.getElementById('greeks-vol').value) / 100;
+            const optionType = document.getElementById('greeks-option-type').value;
+
+            const currentGreeks = calculateGreeks(S, K, T, r, sigma, optionType);
+            document.getElementById('greeks-delta').textContent = currentGreeks.delta.toFixed(4);
+            document.getElementById('greeks-gamma').textContent = currentGreeks.gamma.toFixed(4);
+            document.getElementById('greeks-theta').textContent = currentGreeks.theta.toFixed(4);
+            document.getElementById('greeks-vega').textContent = currentGreeks.vega.toFixed(4);
+            document.getElementById('greeks-rho').textContent = currentGreeks.rho.toFixed(4);
+
+            const stockPrices = Array.from({length: 101}, (_, i) => 50 + (150 * i / 100));
+            const greeksData = { delta: [], gamma: [], theta: [], vega: [], rho: [] };
+            
+            for (const s_val of stockPrices) {
+                const g = calculateGreeks(s_val, K, T, r, sigma, optionType);
+                greeksData.delta.push(g.delta);
+                greeksData.gamma.push(g.gamma);
+                greeksData.theta.push(g.theta);
+                greeksData.vega.push(g.vega);
+                greeksData.rho.push(g.rho);
+            }
+
+            const traceColor = optionType === 'call' ? '#667eea' : '#764ba2';
+            const commonTraceProps = { x: stockPrices, type: 'scatter', mode: 'lines', line: { color: traceColor, width: 2.5 } };
+
+            const traces = [
+                { ...commonTraceProps, y: greeksData.delta, name: 'Delta (Δ)', xaxis: 'x', yaxis: 'y' },
+                { ...commonTraceProps, y: greeksData.gamma, name: 'Gamma (Γ)', xaxis: 'x2', yaxis: 'y2' },
+                { ...commonTraceProps, y: greeksData.theta, name: 'Theta (Θ)', xaxis: 'x3', yaxis: 'y3' },
+                { ...commonTraceProps, y: greeksData.vega, name: 'Vega (ν)', xaxis: 'x4', yaxis: 'y4' },
+                { ...commonTraceProps, y: greeksData.rho, name: 'Rho (ρ)', xaxis: 'x5', yaxis: 'y5' }
+            ];
+
+            const createShape = (val, y_data, xref, yref) => ({
+                type: 'line', x0: val, y0: Math.min(...y_data), x1: val, y1: Math.max(...y_data),
+                xref: xref, yref: yref, line: { color: '#ff6347', width: 1.5, dash: 'dash' }
+            });
+            
+            const layout = {
+                title: `Greeks vs. Stock Price for a ${optionType.charAt(0).toUpperCase() + optionType.slice(1)} Option`,
+                grid: { rows: 3, columns: 2, pattern: 'independent', roworder: 'top to bottom' },
+                showlegend: false,
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                font: { family: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif' },
+                margin: { l: 60, r: 20, t: 80, b: 50 },
+                yaxis: { title: 'Delta (Δ)', gridcolor: '#eee' },
+                xaxis2: { title: 'Stock Price', gridcolor: '#eee' },
+                yaxis2: { title: 'Gamma (Γ)', gridcolor: '#eee' },
+                xaxis3: { title: 'Stock Price', gridcolor: '#eee' },
+                yaxis3: { title: 'Theta (Θ)', gridcolor: '#eee' },
+                xaxis4: { title: 'Stock Price', gridcolor: '#eee' },
+                yaxis4: { title: 'Vega (ν)', gridcolor: '#eee' },
+                xaxis5: { title: 'Stock Price', gridcolor: '#eee' },
+                yaxis5: { title: 'Rho (ρ)', gridcolor: '#eee' },
+                shapes: [
+                    createShape(S, greeksData.delta, 'x', 'y'),
+                    createShape(S, greeksData.gamma, 'x2', 'y2'),
+                    createShape(S, greeksData.theta, 'x3', 'y3'),
+                    createShape(S, greeksData.vega, 'x4', 'y4'),
+                    createShape(S, greeksData.rho, 'x5', 'y5')
+                ]
+            };
+            
+            Plotly.react('greeks-plot', traces, layout, {responsive: true});
+        }
+        
+        // Initializer
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCalculator();
+            updateCurveChart();
+            updateGreeksChart();
+        });
+
+    </script>
+</body>
+</html>
